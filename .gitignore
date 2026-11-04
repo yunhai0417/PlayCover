@@ -2,12 +2,15 @@
 #
 # gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
 
-/Carthage
 .DS_store
-/vendor
 /output
 /apikey.json
 Package.resolved
+
+# Local PlayTools payload (built by scripts/build-playtools.sh, embedded via CocoaPods)
+/Vendor/*
+!/Vendor/PlayTools.podspec
+/.playtools-build/
 
 ## User settings
 xcuserdata/
@@ -61,17 +64,10 @@ playground.xcworkspace
 # you should judge for yourself, the pros and cons are mentioned at:
 # https://guides.cocoapods.org/using/using-cocoapods.html#should-i-check-the-pods-directory-into-source-control
 #
-# Pods/
+Pods/
 #
 # Add this line if you want to avoid checking in source code from the Xcode workspace
 # *.xcworkspace
-
-# Carthage
-#
-# Add this line if you want to avoid checking in source code from Carthage dependencies.
-# Carthage/Checkouts
-
-Carthage/Build/
 
 # Accio dependency management
 Dependencies/

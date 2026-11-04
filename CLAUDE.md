@@ -4,13 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-PlayCover is a Swift/SwiftUI macOS app (Apple Silicon only) that runs iOS apps and games natively on Mac. It wraps iOS IPAs in an iPad-imitating layer, converts Mach-O binaries, injects the PlayTools framework (a separate Carthage dependency, github.com/PlayCover/PlayTools) for graphics/input/keymapping, and re-signs apps with entitlements. GPLv3 licensed.
+PlayCover is a Swift/SwiftUI macOS app (Apple Silicon only) that runs iOS apps and games natively on Mac. It wraps iOS IPAs in an iPad-imitating layer, converts Mach-O binaries, injects the PlayTools framework (built locally from a sibling clone of github.com/PlayCover/PlayTools) for graphics/input/keymapping, and re-signs apps with entitlements. GPLv3 licensed.
 
 ## Build & Lint
 
-- Dependencies are managed with **Carthage**: `carthage update --use-xcframeworks` (fetches PlayTools into `Carthage/`). CI sets `GITHUB_ACCESS_TOKEN` to avoid rate limits.
-- Build from Xcode with the `PlayCover` scheme. There are **no Debug configurations** — only `Release` and `Nightly`.
-- Command-line build: `xcodebuild -scheme PlayCover -configuration Release build` (requires Carthage deps fetched first).
+- PlayTools is a **fully local dependency** (never linked at compile time — it is a runtime payload embedded into the app bundle and injected into IPAs):
+  - `scripts/build-playtools.sh` builds `PlayTools.xcframework` from the sibling repo `../PlayTools` into `Vendor/` (gitignored; clone PlayCover/PlayTools next to this repo or set `PLAYTOOLS_DIR`).
+  - `Vendor/PlayTools.podspec` is a script-only CocoaPods pod that injects the build phase embedding the framework (copy → vtool maccatalyst conversion → deep-framework rebundle). Paths use `PODS_TARGET_SRCROOT` / `PODS_CONFIGURATION_BUILD_DIR` because the phase runs on the pod's aggregate target inside the Pods project.
+- After pulling or changing PlayTools: `scripts/build-playtools.sh`, then `pod install` if the Podfile/podspec changed. Build via **`PlayCover.xcworkspace`**. There are **no Debug configurations** — only `Release` and `Nightly`.
+- Command-line build: `xcodebuild -workspace PlayCover.xcworkspace -scheme PlayCover -configuration Release build` (requires `Vendor/PlayTools.xcframework` built first).
 - SwiftLint runs with `--strict` (zero warnings) on every push/PR via `.github/workflows/SwiftLint.yml`. Run locally with `swiftlint --strict`. Config: `.swiftlint.yml` (note: `force_unwrapping` is opted in).
 - **No test targets exist** in this project.
 - Releases are built with fastlane (`bundle exec fastlane release` / `nightly`); these require signing certs via `match` and are CI-only.

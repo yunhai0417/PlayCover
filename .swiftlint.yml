@@ -5,6 +5,7 @@ excluded:
   - Carthage
   - Pods
   - .build
+  - LocalPackages
 
 identifier_name:
   allowed_symbols: ['_']

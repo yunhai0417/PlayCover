@@ -1,0 +1,16 @@
+PODS:
+  - PlayTools (1.0.0)
+
+DEPENDENCIES:
+  - PlayTools (from `Vendor`)
+
+EXTERNAL SOURCES:
+  PlayTools:
+    :path: Vendor
+
+SPEC CHECKSUMS:
+  PlayTools: 04087b10ff630e8e2d36054ce71d6d82fbbfd64c
+
+PODFILE CHECKSUM: bde3dabeea2aef3f2099c29ddb3e75db9cf10efe
+
+COCOAPODS: 1.16.2

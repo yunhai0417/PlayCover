@@ -171,28 +171,66 @@ class AppSettings {
     }
 
     /// Window size for the "App Default" resolution mode, derived from the
-    /// screen aspect ratio of the selected iOS device model, oriented either
-    /// landscape or portrait. The long edge is kept at 1920 points.
+    /// selected iOS device model, oriented either landscape or portrait.
+    /// iPhones observe the device's real logical screen in points, and the
+    /// window is shrunk so its physical size on the Mac display matches the
+    /// real device (Mac points are physically larger than phone points);
+    /// iPads keep a 4:3 window with a 1920-point long edge.
     static func defaultResolution(for model: String, portrait: Bool) -> (width: Int, height: Int) {
-        // long:short screen ratio of the selected device model
-        let longRatio: Int
-        let shortRatio: Int
-        if model.hasPrefix("iPhone") {
-            // iPhone full-screen ratio since the iPhone X (19.5:9)
-            longRatio = 39
-            shortRatio = 18
-        } else {
+        guard let logical = iphoneLogicalSize(for: model) else {
             // iPads are 4:3
-            longRatio = 4
-            shortRatio = 3
+            let longSide = 1920
+            let shortSide = longSide * 3 / 4
+            return portrait ? (shortSide, longSide) : (longSide, shortSide)
         }
-        let longSide = 1920
-        let shortSide = longSide * shortRatio / longRatio
-        if portrait {
-            return (shortSide, longSide)
-        } else {
-            return (longSide, shortSide)
+        let size = portrait ? logical : CGSize(width: logical.height, height: logical.width)
+        let ratio = physicalMatchRatio(for: model)
+        return (Int((size.width * ratio).rounded()), Int((size.height * ratio).rounded()))
+    }
+
+    /// Logical screen size (portrait orientation, in points) of the supported
+    /// iPhone models; nil for iPads and unknown identifiers.
+    private static func iphoneLogicalSize(for model: String) -> CGSize? {
+        switch model {
+        case "iPhone14,3":
+            return CGSize(width: 428, height: 926)
+        case "iPhone15,3", "iPhone16,2":
+            return CGSize(width: 430, height: 932)
+        case "iPhone17,2":
+            return CGSize(width: 440, height: 956)
+        default:
+            return nil
         }
+    }
+
+    /// Physical size (mm) of one point on the main Mac display: panel width
+    /// in millimetres divided by the logical width in points.
+    private static var macPointSizeMM: CGFloat {
+        guard let screen = NSScreen.main,
+              let number = screen.deviceDescription[.init("NSScreenNumber")] as? NSNumber else {
+            return 0.2
+        }
+        let sizeMM = CGDisplayScreenSize(CGDirectDisplayID(number.uint32Value))
+        guard screen.frame.width > 0, sizeMM.width > 20, sizeMM.width < 2000 else {
+            return 0.2
+        }
+        return sizeMM.width / screen.frame.width
+    }
+
+    /// Scale factor that makes a window of N device points physically match
+    /// the same N points on the real iPhone (device point = 3 px at ~460 PPI).
+    private static func physicalMatchRatio(for model: String) -> CGFloat {
+        let ppi: Double
+        switch model {
+        case "iPhone14,3":
+            ppi = 458
+        case "iPhone15,3", "iPhone16,2", "iPhone17,2":
+            ppi = 460
+        default:
+            return 1.0
+        }
+        let devicePointMM = CGFloat(3.0 * 25.4 / ppi)
+        return min(max(devicePointMM / macPointSizeMM, 0.4), 1.0)
     }
 
     public func reset() {

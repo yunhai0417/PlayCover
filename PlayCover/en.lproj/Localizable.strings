@@ -176,6 +176,10 @@
 "settings.picker.adaptiveRes.1" = "Auto (Based on Display)";
 "settings.picker.adaptiveRes.5" = "Custom";
 "settings.picker.adaptiveRes.6" = "Resizable";
+"settings.picker.orientation" = "Orientation:";
+"settings.picker.orientation.help" = "Window orientation for the app default resolution, using the selected device model's aspect ratio";
+"settings.picker.orientation.landscape" = "Landscape";
+"settings.picker.orientation.portrait" = "Portrait";
 "settings.text.customHeight" = "Height";
 "settings.text.customWidth" = "Width";
 "settings.text.detectedResolution" = "Detected Resolution:";

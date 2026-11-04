@@ -303,6 +303,7 @@ struct GraphicsView: View {
                             Text("4:3").tag(0)
                             Text("16:9").tag(1)
                             Text("16:10").tag(2)
+                            Text("19.5:9").tag(3)
                         }
                         .pickerStyle(.radioGroup)
                         .horizontalRadioGroupLayout()
@@ -315,6 +316,7 @@ struct GraphicsView: View {
                                 Text("4:3").tag(2)
                                 Text("16:9").tag(3)
                                 Text("16:10").tag(4)
+                                Text("19.5:9").tag(5)
                             }
                             .pickerStyle(.radioGroup)
                             .horizontalRadioGroupLayout()
@@ -336,6 +338,15 @@ struct GraphicsView: View {
                         Text("settings.text.detectedResolution")
                         Spacer()
                         Text("\(resolution.width) x \(resolution.height)")
+                    } else if settings.settings.resolution == 0 {
+                        Text("settings.picker.orientation")
+                        Spacer()
+                        Picker("", selection: $settings.settings.defaultResolutionOrientation) {
+                            Text("settings.picker.orientation.landscape").tag(0)
+                            Text("settings.picker.orientation.portrait").tag(1)
+                        }
+                        .frame(width: 250, alignment: .leading)
+                        .help("settings.picker.orientation.help")
                     } else {
                         Spacer()
                     }
@@ -426,6 +437,14 @@ struct GraphicsView: View {
             .onChange(of: settings.settings.resizableAspectRatioType) { _ in
                 setAspectRatioForResizableWindow()
             }
+            .onChange(of: settings.settings.defaultResolutionOrientation) { _ in
+                setResolution()
+            }
+            .onChange(of: settings.settings.iosDeviceModel) { _ in
+                if settings.settings.resolution == 0 {
+                    setResolution()
+                }
+            }
         }
     }
 
@@ -455,10 +474,14 @@ struct GraphicsView: View {
         case 5:
             width = customWidth
             height = customHeight
-        // Adaptive resolution = Off
+        // Adaptive resolution = App Default (follows the selected device model's aspect ratio)
         default:
-            height = 1080
-            width = 1920
+            let resolution = AppSettings.defaultResolution(
+                for: settings.settings.iosDeviceModel,
+                portrait: settings.settings.defaultResolutionOrientation == 1
+            )
+            width = resolution.width
+            height = resolution.height
         }
 
         settings.settings.windowWidth = width
@@ -483,6 +506,10 @@ struct GraphicsView: View {
         case 2:
             widthRatio = 16
             heightRatio = 10
+        case 3:
+            // iPhone full-screen ratio since the iPhone X
+            widthRatio = 39
+            heightRatio = 18
         default:
             widthRatio = 16
             heightRatio = 9
@@ -514,6 +541,10 @@ struct GraphicsView: View {
         case 4:
             widthRatio = 16
             heightRatio = 10
+        // Aspect ratio = 19.5:9
+        case 5:
+            widthRatio = 39
+            heightRatio = 18
         default:
             widthRatio = 16
             heightRatio = 9

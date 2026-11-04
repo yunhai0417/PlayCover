@@ -52,6 +52,7 @@ struct AppSettingsData: Codable {
     var resizableAspectRatioHeight = 0
     var blockSleepSpamming = false
     var ignoreUnityKeyboardInitializationError = false
+    var defaultResolutionOrientation = 0
 
     init() {}
 
@@ -68,6 +69,8 @@ struct AppSettingsData: Codable {
         windowHeight = try container.decodeIfPresent(Int.self, forKey: .windowHeight) ?? 1080
         customScaler = try container.decodeIfPresent(Double.self, forKey: .customScaler) ?? 2.0
         resolution = try container.decodeIfPresent(Int.self, forKey: .resolution) ?? 1
+        // the removed "iPhone preset" resolution mode (7) falls back to the app default (0)
+        if resolution == 7 { resolution = 0 }
         aspectRatio = try container.decodeIfPresent(Int.self, forKey: .aspectRatio) ?? 1
         notch = try container.decodeIfPresent(Bool.self, forKey: .notch) ?? NSScreen.hasNotch()
         bypass = try container.decodeIfPresent(Bool.self, forKey: .bypass) ?? false
@@ -95,6 +98,8 @@ struct AppSettingsData: Codable {
         blockSleepSpamming = try container.decodeIfPresent(Bool.self, forKey: .blockSleepSpamming) ?? false
         ignoreUnityKeyboardInitializationError = try container.decodeIfPresent(
             Bool.self, forKey: .ignoreUnityKeyboardInitializationError) ?? false
+        defaultResolutionOrientation = try container.decodeIfPresent(
+            Int.self, forKey: .defaultResolutionOrientation) ?? 0
     }
 }
 
@@ -162,6 +167,31 @@ class AppSettings {
             return (width, Int((wFloat / 16) * 10))
         } else {
             return (width, height)
+        }
+    }
+
+    /// Window size for the "App Default" resolution mode, derived from the
+    /// screen aspect ratio of the selected iOS device model, oriented either
+    /// landscape or portrait. The long edge is kept at 1920 points.
+    static func defaultResolution(for model: String, portrait: Bool) -> (width: Int, height: Int) {
+        // long:short screen ratio of the selected device model
+        let longRatio: Int
+        let shortRatio: Int
+        if model.hasPrefix("iPhone") {
+            // iPhone full-screen ratio since the iPhone X (19.5:9)
+            longRatio = 39
+            shortRatio = 18
+        } else {
+            // iPads are 4:3
+            longRatio = 4
+            shortRatio = 3
+        }
+        let longSide = 1920
+        let shortSide = longSide * shortRatio / longRatio
+        if portrait {
+            return (shortSide, longSide)
+        } else {
+            return (longSide, shortSide)
         }
     }
 
